@@ -1,7 +1,8 @@
 import { config } from 'dotenv'
-import { ChannelType, Client as DiscordClient, Events, GatewayIntentBits } from 'discord.js'
+import { Client as DiscordClient, Events, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js'
 import sqlite3 from 'sqlite3'
 import { open } from 'sqlite'
+import cron from 'cron-validate'
 config()
 
 async function initializeDatabase() {
@@ -14,34 +15,13 @@ async function initializeDatabase() {
     CREATE TABLE IF NOT EXISTS voice_channels (
       id TEXT PRIMARY KEY,
       guild_id TEXT NOT NULL,
-      name TEXT NOT NULL,
-      crontab TEXT
+      channel TEXT NOT NULL,
+      crontab TEXT,
+      UNIQUE(guild_id, channel)
     )
   `)
 
   return db
-}
-
-async function listAllChannels(client: DiscordClient, db: any) {
-  const guilds = await client.guilds.fetch()
-
-  for (const guild of guilds.values()) {
-    const fullGuild = await client.guilds.fetch(guild.id)
-    console.log(`Guild: ${fullGuild.name}`)
-
-    const channels = await fullGuild.channels.fetch()
-    channels.forEach(async (channel) => {
-      if (channel?.type !== ChannelType.GuildVoice) return
-      console.log(`Channel Name: ${channel.name}, Type: ${channel.type}, id: ${channel.id}`)
-      // await db.run(
-      //   `
-      //   INSERT OR IGNORE INTO voice_channels (id, guild_id, name)
-      //   VALUES (?, ?, ?)
-      // `,
-      //   [channel.id, guild.id, channel.name]
-      // )
-    })
-  }
 }
 
 async function main() {
@@ -51,12 +31,46 @@ async function main() {
 
   const db = await initializeDatabase()
 
-  client.on(Events.ClientReady, () => {
+  client.on(Events.ClientReady, async () => {
     console.log(`Logged in as ${client.user?.tag}!`)
-    listAllChannels(client, db).catch(console.error)
+    await registerCommands(client)
   })
 
-  // // keep nodejs alive
+  client.on(Events.InteractionCreate, async (interaction) => {
+    if (!interaction.isCommand()) return
+
+    const { commandName } = interaction
+
+    if (commandName === 'install') {
+      const channelName = interaction.options.get('channel')!.value
+      if (typeof channelName !== 'string') {
+        return await interaction.reply('Invalid channel')
+      }
+      const crontab = interaction.options.get('crontab')!.value
+      if (typeof crontab !== 'string') {
+        return await interaction.reply('Invalid crontab')
+      }
+      const guild = interaction.guildId
+
+      const cronResult = cron(crontab)
+      if (cronResult.isValid()) {
+        await db.run(
+          `
+          INSERT INTO voice_channels (id, guild_id, channel, crontab)
+          VALUES (?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            channel=excluded.channel,
+            crontab=excluded.crontab
+          `,
+          [interaction.channelId, guild, channelName, crontab]
+        )
+        await interaction.reply(`Channel ${channelName} with crontab ${crontab} has been installed.`)
+      } else {
+        await interaction.reply(`Invalid crontab expression: ${crontab}`)
+      }
+    }
+  })
+
   client.on(Events.MessageCreate, async (message) => {
     console.log('message', message)
     console.log('message.content', message.content)
@@ -66,4 +80,29 @@ async function main() {
   })
   client.login(process.env.DISCORD_BOT_TOKEN)
 }
+
+async function registerCommands(client: DiscordClient) {
+  const commands = [
+    new SlashCommandBuilder()
+      .setName('install')
+      .setDescription('Install a channel with a crontab')
+      .addChannelOption((option) =>
+        option.setName('channel').setDescription('The name of the channel').setRequired(true)
+      )
+      .addStringOption((option) => option.setName('crontab').setDescription('The crontab schedule').setRequired(true)),
+  ].map((command) => command.toJSON())
+
+  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN!)
+
+  try {
+    console.log('Started refreshing application (/) commands.')
+
+    await rest.put(Routes.applicationCommands(client.user!.id), { body: commands })
+
+    console.log('Successfully reloaded application (/) commands.')
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 main()
