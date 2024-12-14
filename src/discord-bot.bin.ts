@@ -26,6 +26,9 @@ async function main() {
       if (typeof channelName !== 'string') {
         return await interaction.reply('Invalid channel')
       }
+      if (channelName.length > 20 || channelName.length < 16 || !/^\d+$/.test(channelName)) {
+        return await interaction.reply('Invalid channel')
+      }
       const crontab = interaction.options.get('crontab')!.value
       if (typeof crontab !== 'string') {
         return await interaction.reply('Invalid crontab')
@@ -41,14 +44,6 @@ async function main() {
       } else {
         await interaction.reply(`Invalid crontab expression: ${crontab}`)
       }
-    }
-  })
-
-  client.on(Events.MessageCreate, async (message) => {
-    console.log('message', message)
-    console.log('message.content', message.content)
-    if (message.content === 'ping') {
-      message.reply('pong')
     }
   })
   client.login(process.env.DISCORD_BOT_TOKEN)

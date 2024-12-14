@@ -10,7 +10,7 @@ export async function initializeDatabase() {
 
   await db.exec(`
     CREATE TABLE IF NOT EXISTS voice_channels (
-      id TEXT PRIMARY KEY,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
       guild_id TEXT NOT NULL,
       channel TEXT NOT NULL,
       crontab TEXT,
@@ -37,12 +37,16 @@ export async function upsertChannel(
 ) {
   await db.run(
     `
-    INSERT INTO voice_channels (id, guild_id, channel, crontab)
-    VALUES (?, ?, ?, ?)
-    ON CONFLICT(id) DO UPDATE SET
+    INSERT INTO voice_channels (guild_id, channel, crontab)
+    VALUES (?, ?, ?)
+    ON CONFLICT(guild_id, channel) DO UPDATE SET
       channel=excluded.channel,
       crontab=excluded.crontab
     `,
-    [interaction.channelId, guild, channelName, crontab]
+    [guild, channelName, crontab]
   )
+}
+
+export async function getAll(db: Database) {
+  return db.all(`SELECT * FROM voice_channels`)
 }
