@@ -1,10 +1,11 @@
 import { config } from 'dotenv'
+config()
 import { Client as DiscordClient, Events, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js'
 import cronv from 'cron-validate'
 import { initializeDatabase, upsertChannel, getAllCronJobs, deleteChannel } from './sqlite'
 import { startChallengeSendCronJob, stopChallengeSendCronJob } from './cron'
 import { generateVoiceChallengeResponse } from './generateVoiceChallengeResponse'
-config()
+
 if (!process.env.DISCORD_BOT_TOKEN) {
   throw new Error('DISCORD_BOT_TOKEN is required')
 }
