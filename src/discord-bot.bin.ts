@@ -3,6 +3,7 @@ import { Client as DiscordClient, Events, GatewayIntentBits, REST, Routes, Slash
 import cronv from 'cron-validate'
 import { initializeDatabase, upsertChannel, getAllCronJobs, deleteChannel } from './sqlite'
 import { startChallengeSendCronJob, stopChallengeSendCronJob } from './cron'
+import { generateVoiceChallengeResponse } from './generateVoiceChallengeResponse'
 config()
 
 async function main() {
@@ -26,8 +27,8 @@ async function main() {
     if (!interaction.isCommand()) return
 
     const { commandName } = interaction
-
-    if (commandName === 'install') {
+    console.warn('Command:', commandName)
+    if (commandName === 'vcb_install') {
       const channelName = interaction.options.get('channel')!.value
       if (typeof channelName !== 'string') {
         return await interaction.reply('Invalid channel')
@@ -51,7 +52,7 @@ async function main() {
       } else {
         await interaction.reply(`Invalid crontab expression: ${crontab}`)
       }
-    } else if (commandName === 'uninstall') {
+    } else if (commandName === 'vcb_uninstall') {
       const channelName = interaction.options.get('channel')!.value
       if (typeof channelName !== 'string') {
         return await interaction.reply('Invalid channel')
@@ -63,6 +64,14 @@ async function main() {
       await deleteChannel(db, guild, channelName)
       stopChallengeSendCronJob(guild, channelName)
       await interaction.reply(`Channel ${channelName} has been uninstalled.`)
+    } else if (commandName === 'vcb_generate_challenge') {
+      const guild = interaction.guildId
+      if (typeof guild !== 'string') {
+        return await interaction.reply('Invalid guild')
+      }
+      await interaction.reply(await generateVoiceChallengeResponse())
+    } else {
+      await interaction.reply('Unknown command')
     }
   })
   client.login(process.env.DISCORD_BOT_TOKEN)
@@ -71,18 +80,19 @@ async function main() {
 async function registerCommands(client: DiscordClient) {
   const commands = [
     new SlashCommandBuilder()
-      .setName('install')
+      .setName('vcb_install')
       .setDescription('Install a channel with a crontab')
       .addChannelOption((option) =>
         option.setName('channel').setDescription('The name of the channel').setRequired(true)
       )
       .addStringOption((option) => option.setName('crontab').setDescription('The crontab schedule').setRequired(true)),
     new SlashCommandBuilder()
-      .setName('uninstall')
+      .setName('vcb_uninstall')
       .setDescription('Uninstall a channel')
       .addChannelOption((option) =>
         option.setName('channel').setDescription('The name of the channel').setRequired(true)
       ),
+    new SlashCommandBuilder().setName('vcb_generate_challenge').setDescription('Generate a voice challenge'),
   ].map((command) => command.toJSON())
 
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_BOT_TOKEN!)
