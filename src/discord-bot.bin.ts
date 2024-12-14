@@ -4,7 +4,29 @@ import { CronJob } from 'cron'
 import cronv from 'cron-validate'
 import { initializeDatabase, upsertChannel, getAllCronJobs } from './sqlite'
 config()
+const runningCronJobs: Record<string, CronJob> = {}
+function startCronJob(client: DiscordClient, guildId: string, channel: string, crontab: string) {
+  const key = `${guildId}-${channel}`
+  if (runningCronJobs[key]) {
+    runningCronJobs[key].stop()
+  }
+  const job = new CronJob(
+    crontab,
+    async function sendMessage() {
+      const guild = await client.guilds.fetch(guildId)
+      const textChannel = guild.channels.cache.get(channel)
 
+      if (textChannel && textChannel.isTextBased()) {
+        await textChannel.send(`Scheduled message for channel ${channel}`)
+      }
+    },
+    null,
+    true,
+    'America/Denver'
+  )
+  job.start()
+  runningCronJobs[key] = job
+}
 async function main() {
   const client = new DiscordClient({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates] as const,
@@ -14,20 +36,7 @@ async function main() {
 
   const cronJobs = await getAllCronJobs(db)
   cronJobs.forEach(({ guild_id, channel, crontab }) => {
-    const job = new CronJob(
-      crontab,
-      async function sendMessage() {
-        const guild = await client.guilds.fetch(guild_id)
-        const textChannel = guild.channels.cache.get(channel)
-        if (textChannel && textChannel.isTextBased()) {
-          await textChannel.send(`Scheduled message for channel ${channel}`)
-        }
-      },
-      null,
-      true,
-      'America/Los_Angeles'
-    )
-    job.start()
+    startCronJob(client, guild_id, channel, crontab)
   })
 
   client.on(Events.ClientReady, async () => {
@@ -59,6 +68,7 @@ async function main() {
       const cronResult = cronv(crontab)
       if (cronResult.isValid()) {
         await upsertChannel(db, { interaction, channelName, crontab, guild })
+        startCronJob(client, guild, channelName, crontab)
         await interaction.reply(`Channel ${channelName} with crontab ${crontab} has been installed.`)
       } else {
         await interaction.reply(`Invalid crontab expression: ${crontab}`)
