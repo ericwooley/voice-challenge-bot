@@ -1,7 +1,8 @@
 import { config } from 'dotenv'
 import { Client as DiscordClient, Events, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js'
-import cron from 'cron-validate'
-import { initializeDatabase, upsertChannel } from './sqlite'
+import { CronJob } from 'cron'
+import cronv from 'cron-validate'
+import { initializeDatabase, upsertChannel, getAllCronJobs } from './sqlite'
 config()
 
 async function main() {
@@ -10,6 +11,24 @@ async function main() {
   })
 
   const db = await initializeDatabase()
+
+  const cronJobs = await getAllCronJobs(db)
+  cronJobs.forEach(({ guild_id, channel, crontab }) => {
+    const job = new CronJob(
+      crontab,
+      async function sendMessage() {
+        const guild = await client.guilds.fetch(guild_id)
+        const textChannel = guild.channels.cache.get(channel)
+        if (textChannel && textChannel.isTextBased()) {
+          await textChannel.send(`Scheduled message for channel ${channel}`)
+        }
+      },
+      null,
+      true,
+      'America/Los_Angeles'
+    )
+    job.start()
+  })
 
   client.on(Events.ClientReady, async () => {
     console.log(`Logged in as ${client.user?.tag}!`)
@@ -37,7 +56,7 @@ async function main() {
       if (typeof guild !== 'string') {
         return await interaction.reply('Invalid guild')
       }
-      const cronResult = cron(crontab)
+      const cronResult = cronv(crontab)
       if (cronResult.isValid()) {
         await upsertChannel(db, { interaction, channelName, crontab, guild })
         await interaction.reply(`Channel ${channelName} with crontab ${crontab} has been installed.`)

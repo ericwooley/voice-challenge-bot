@@ -47,6 +47,8 @@ export async function upsertChannel(
   )
 }
 
-export async function getAll(db: Database) {
-  return db.all(`SELECT * FROM voice_channels`)
+
+
+export async function getAllCronJobs(db: Database) {
+  return db.all(`SELECT guild_id, channel, crontab FROM voice_channels`)
 }
