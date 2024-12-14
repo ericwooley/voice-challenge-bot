@@ -3,7 +3,9 @@ import { GoogleGenerativeAI, StartChatParams, SchemaType } from '@google/generat
 const apiKey = process.env.GEMINI_API_KEY as string
 const genAI = new GoogleGenerativeAI(apiKey)
 
-export async function generateVoiceChallenge(userInput: string) {
+export async function generateVoiceChallenge(
+  userInput: string
+): Promise<{ title: string; challenge: string; bonus: string }> {
   let retry = 0
   while (retry < 3) {
     try {
@@ -64,10 +66,15 @@ export async function generateVoiceChallenge(userInput: string) {
         ],
       })
       const result = await chatSession.sendMessage(userInput)
-      return result.response.text()
+      return JSON.parse(result.response.text())
     } catch (e) {
-      console.log(e)
+      console.error(e)
       retry++
     }
+  }
+  return {
+    title: 'Failed to generate voice challenge',
+    challenge: 'Failed to generate voice challenge',
+    bonus: 'Failed to generate voice challenge',
   }
 }

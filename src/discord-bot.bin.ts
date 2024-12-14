@@ -1,32 +1,10 @@
 import { config } from 'dotenv'
 import { Client as DiscordClient, Events, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js'
-import { CronJob } from 'cron'
 import cronv from 'cron-validate'
 import { initializeDatabase, upsertChannel, getAllCronJobs } from './sqlite'
+import { startCronJob } from './cron'
 config()
-const runningCronJobs: Record<string, CronJob> = {}
-function startCronJob(client: DiscordClient, guildId: string, channel: string, crontab: string) {
-  const key = `${guildId}-${channel}`
-  if (runningCronJobs[key]) {
-    runningCronJobs[key].stop()
-  }
-  const job = new CronJob(
-    crontab,
-    async function sendMessage() {
-      const guild = await client.guilds.fetch(guildId)
-      const textChannel = guild.channels.cache.get(channel)
 
-      if (textChannel && textChannel.isTextBased()) {
-        await textChannel.send(`Scheduled message for channel ${channel}`)
-      }
-    },
-    null,
-    true,
-    'America/Denver'
-  )
-  job.start()
-  runningCronJobs[key] = job
-}
 async function main() {
   const client = new DiscordClient({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates] as const,
