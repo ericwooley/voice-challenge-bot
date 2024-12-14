@@ -1,28 +1,8 @@
 import { config } from 'dotenv'
 import { Client as DiscordClient, Events, GatewayIntentBits, REST, Routes, SlashCommandBuilder } from 'discord.js'
-import sqlite3 from 'sqlite3'
-import { open } from 'sqlite'
 import cron from 'cron-validate'
+import { initializeDatabase, upsertChannel } from './sqlite'
 config()
-
-async function initializeDatabase() {
-  const db = await open({
-    filename: './voice-challenge-bot.db',
-    driver: sqlite3.Database,
-  })
-
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS voice_channels (
-      id TEXT PRIMARY KEY,
-      guild_id TEXT NOT NULL,
-      channel TEXT NOT NULL,
-      crontab TEXT,
-      UNIQUE(guild_id, channel)
-    )
-  `)
-
-  return db
-}
 
 async function main() {
   const client = new DiscordClient({
@@ -51,19 +31,12 @@ async function main() {
         return await interaction.reply('Invalid crontab')
       }
       const guild = interaction.guildId
-
+      if (typeof guild !== 'string') {
+        return await interaction.reply('Invalid guild')
+      }
       const cronResult = cron(crontab)
       if (cronResult.isValid()) {
-        await db.run(
-          `
-          INSERT INTO voice_channels (id, guild_id, channel, crontab)
-          VALUES (?, ?, ?, ?)
-          ON CONFLICT(id) DO UPDATE SET
-            channel=excluded.channel,
-            crontab=excluded.crontab
-          `,
-          [interaction.channelId, guild, channelName, crontab]
-        )
+        await upsertChannel(db, { interaction, channelName, crontab, guild })
         await interaction.reply(`Channel ${channelName} with crontab ${crontab} has been installed.`)
       } else {
         await interaction.reply(`Invalid crontab expression: ${crontab}`)
