@@ -17,6 +17,6 @@ Answer: ${contextData?.answer}`
 \`\`\`
 ${userResponse.challenge}
 \`\`\`
-*Bonus Points if your voice has a ${userResponse.bonus.toLowerCase().replace(/\.$/, '')}.*
+Bonus points if your voice has a **${userResponse.bonus.toLowerCase().replace(/\.$/, '')}.**
           `.trim()
 }

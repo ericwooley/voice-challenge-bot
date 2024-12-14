@@ -17,6 +17,8 @@ export async function generateVoiceChallenge(
 
   Additionally, the user may supply some extra information. Please use this as inspiration for a funny prompt, but do not output anything political or religious in nature. Keep suggestions PG-13.
 
+  The bonus should be a suggestion for a specific speed and pitch. For example, "fast speed and low pitch.", "slow speed and high pitch.", etc. there should never be any punctuation at the end of the bonus, or any other words besides the speed and pitch. "<speed> speed and <pitch> pitch".
+
   \`\`\`
   {
   "title": "<title>",

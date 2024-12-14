@@ -1,6 +1,5 @@
 import sqlite3 from 'sqlite3'
 import { open, Database } from 'sqlite'
-import { Interaction } from 'discord.js'
 
 export async function initializeDatabase() {
   const db = await open({
@@ -24,12 +23,10 @@ export async function initializeDatabase() {
 export async function upsertChannel(
   db: Database,
   {
-    interaction,
     channelName,
     crontab,
     guild,
   }: {
-    interaction: Interaction
     channelName: string
     crontab: string
     guild: string
@@ -47,8 +44,10 @@ export async function upsertChannel(
   )
 }
 
-
-
 export async function getAllCronJobs(db: Database) {
   return db.all(`SELECT guild_id, channel, crontab FROM voice_channels`)
+}
+
+export async function deleteChannel(db: Database, guild: string, channel: string) {
+  await db.run(`DELETE FROM voice_channels WHERE guild_id = ? AND channel = ?`, [guild, channel])
 }
