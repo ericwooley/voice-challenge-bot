@@ -8,6 +8,7 @@
     "build": "tsc",
     "build-run": "tsc && node dist/prompt.bin.js",
     "start": "tsc && pm2 start dist/discord-bot.bin.js --name voice-challenge-bot",
+    "restart": "tsc && pm2 restart voice-challenge-bot",
     "logs": "pm2 logs voice-challenge-bot"
   },
   "keywords": [],
