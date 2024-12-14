@@ -13,7 +13,7 @@ export async function generateVoiceChallenge(
   while (retry < 3) {
     try {
       const model = genAI.getGenerativeModel({
-        model: 'gemini-exp-1206',
+        model: 'gemini-2.0-flash-exp',
         systemInstruction: `You are a discord bot. Daily, or on command, you will output a "voice challenge". The challenge will be for discord members of the challenge to use as a basis for a character voice 1 line, 1 character improv scene. It should be in this format:
 
   Voice challenges should come with pitch and speed variations. This refers to how fast someone should speak (Fast, medium, or slow), as well as how high or low their voice is (High, Mid, Low).
@@ -43,11 +43,12 @@ export async function generateVoiceChallenge(
       const generationConfig: StartChatParams['generationConfig'] = {
         temperature: 1,
         topP: 0.95,
-        topK: 64,
+        topK: 40,
         maxOutputTokens: 8192,
         responseMimeType: 'application/json',
         responseSchema: {
           type: SchemaType.OBJECT,
+          required: ['title', 'challenge', 'bonus'],
           properties: {
             title: {
               type: SchemaType.STRING,
@@ -71,7 +72,9 @@ export async function generateVoiceChallenge(
         ],
       })
       const result = await chatSession.sendMessage(userInput)
-      return JSON.parse(result.response.text())
+      const text = result.response.text()
+      console.log(text)
+      return JSON.parse(text)
     } catch (e) {
       console.error(e)
       retry++
