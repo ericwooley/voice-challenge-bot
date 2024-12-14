@@ -1,6 +1,9 @@
 import { GoogleGenerativeAI, StartChatParams, SchemaType } from '@google/generative-ai'
 
 const apiKey = process.env.GEMINI_API_KEY as string
+if (!apiKey) {
+  throw new Error('GEMINI_API_KEY is required')
+}
 const genAI = new GoogleGenerativeAI(apiKey)
 
 export async function generateVoiceChallenge(

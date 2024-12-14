@@ -5,7 +5,9 @@ import { initializeDatabase, upsertChannel, getAllCronJobs, deleteChannel } from
 import { startChallengeSendCronJob, stopChallengeSendCronJob } from './cron'
 import { generateVoiceChallengeResponse } from './generateVoiceChallengeResponse'
 config()
-
+if (!process.env.DISCORD_BOT_TOKEN) {
+  throw new Error('DISCORD_BOT_TOKEN is required')
+}
 async function main() {
   const client = new DiscordClient({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates] as const,
