@@ -96,6 +96,29 @@ async function main() {
     console.log('Healthcheck server listening on port 3000')
   })
   
+  // Graceful shutdown handling
+  const shutdown = async (signal: string) => {
+    console.log(`Received ${signal}, shutting down gracefully...`)
+    
+    // Close HTTP server
+    server.close(() => {
+      console.log('HTTP server closed')
+    })
+    
+    // Close Discord client
+    client.destroy()
+    console.log('Discord client destroyed')
+    
+    // Close database connection
+    await db.close()
+    console.log('Database connection closed')
+    
+    process.exit(0)
+  }
+  
+  process.on('SIGTERM', () => shutdown('SIGTERM'))
+  process.on('SIGINT', () => shutdown('SIGINT'))
+  
   client.login(process.env.DISCORD_BOT_TOKEN)
 }
 
