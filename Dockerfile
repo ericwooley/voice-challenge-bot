@@ -1,7 +1,7 @@
 FROM node:22-alpine
 
 # Install build dependencies for native modules and wget for healthcheck
-RUN apk add --no-cache python3 make g++ wget
+RUN apk add --no-cache python3 make g++ wget curl
 
 # Install pnpm
 RUN npm install -g pnpm
