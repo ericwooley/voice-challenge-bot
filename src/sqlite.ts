@@ -1,9 +1,19 @@
 import sqlite3 from 'sqlite3'
 import { open, Database } from 'sqlite'
+import { mkdirSync, existsSync } from 'fs'
+import { dirname } from 'path'
 
 export async function initializeDatabase() {
+  const dbPath = './db/voice-challenge-bot.db'
+  
+  // Create db directory if it doesn't exist
+  const dbDir = dirname(dbPath)
+  if (!existsSync(dbDir)) {
+    mkdirSync(dbDir, { recursive: true })
+  }
+  
   const db = await open({
-    filename: './voice-challenge-bot.db',
+    filename: dbPath,
     driver: sqlite3.Database,
   })
 

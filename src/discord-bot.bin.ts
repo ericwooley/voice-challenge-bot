@@ -5,6 +5,7 @@ import cronv from 'cron-validate'
 import { initializeDatabase, upsertChannel, getAllCronJobs, deleteChannel } from './sqlite'
 import { startChallengeSendCronJob, stopChallengeSendCronJob } from './cron'
 import { generateVoiceChallengeResponse } from './generateVoiceChallengeResponse'
+import { createServer } from 'http'
 
 if (!process.env.DISCORD_BOT_TOKEN) {
   throw new Error('DISCORD_BOT_TOKEN is required')
@@ -79,6 +80,22 @@ async function main() {
       await interaction.reply('Unknown command')
     }
   })
+  
+  // Start healthcheck server
+  const server = createServer((req, res) => {
+    if (req.url === '/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' })
+      res.end(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }))
+    } else {
+      res.writeHead(404)
+      res.end('Not Found')
+    }
+  })
+  
+  server.listen(3000, () => {
+    console.log('Healthcheck server listening on port 3000')
+  })
+  
   client.login(process.env.DISCORD_BOT_TOKEN)
 }
 
