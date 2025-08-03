@@ -16,17 +16,17 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^22.10.2",
-    "typescript": "^5.7.2"
+    "@types/node": "^22.17.0",
+    "typescript": "^5.9.2"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
-    "@inquirer/prompts": "^7.2.0",
-    "axios": "^1.7.9",
-    "cron": "^3.3.1",
-    "cron-validate": "^1.4.5",
-    "discord.js": "^14.16.3",
-    "dotenv": "^16.4.7",
+    "@inquirer/prompts": "^7.8.0",
+    "axios": "^1.11.0",
+    "cron": "^3.5.0",
+    "cron-validate": "^1.5.2",
+    "discord.js": "^14.21.0",
+    "dotenv": "^16.6.1",
     "pm2": "^5.4.3",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"

@@ -21,10 +21,6 @@ COPY . .
 # Build the TypeScript code
 RUN pnpm build
 
-# Create a non-root user for security
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S botuser -u 1001
-USER botuser
 
 # Expose port (not strictly necessary but good practice)
 EXPOSE 3000

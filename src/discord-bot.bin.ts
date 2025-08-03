@@ -32,6 +32,7 @@ async function main() {
     const { commandName } = interaction
     console.warn('Command:', commandName)
     if (commandName === 'vcb_install') {
+      if (!interaction.isChatInputCommand()) return
       const channelName = interaction.options.get('channel')!.value
       if (typeof channelName !== 'string') {
         return await interaction.reply('Invalid channel')
@@ -56,6 +57,7 @@ async function main() {
         await interaction.reply(`Invalid crontab expression: ${crontab}`)
       }
     } else if (commandName === 'vcb_uninstall') {
+      if (!interaction.isChatInputCommand()) return
       const channelName = interaction.options.get('channel')!.value
       if (typeof channelName !== 'string') {
         return await interaction.reply('Invalid channel')
