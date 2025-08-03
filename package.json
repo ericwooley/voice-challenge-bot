@@ -30,5 +30,11 @@
     "pm2": "^5.4.3",
     "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"
-  }
+
+  },
+  "pnpm": {
+  "onlyBuiltDependencies": [
+    "sqlite3"
+  ]
+}
 }

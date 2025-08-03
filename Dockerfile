@@ -12,7 +12,7 @@ WORKDIR /app
 # Copy package files for better caching
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies
+# Install dependencies and rebuild native modules
 RUN pnpm install --frozen-lockfile
 
 # Copy source code
