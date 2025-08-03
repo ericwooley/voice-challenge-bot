@@ -9,7 +9,7 @@ async function main() {
       console.error('Failed to get context.')
       process.exit(1)
     }
-    const context = `${contextData.question}\nAnswer: ${contextData.answer}`
+    const context = `Recent News: "${contextData.title}" - ${contextData.description} (Source: ${contextData.source.name})`
     console.warn('Context:', context)
     console.warn('Generating voice challenge...')
     const response = await generateVoiceChallenge(context)

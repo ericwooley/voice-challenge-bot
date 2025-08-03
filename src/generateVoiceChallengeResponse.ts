@@ -3,10 +3,10 @@ import { generateVoiceChallenge } from './prompt'
 
 export async function generateVoiceChallengeResponse() {
   const contextData = await contextPool.getContext()
-  const context = `
-          *${contextData?.question}*
-          ${contextData?.choices.map((choice, index) => `${index + 1}. ${choice}`).join('\n')}\n\n
-Answer: ${contextData?.answer}`
+  const context = contextData 
+    ? `Recent News: "${contextData.title}" - ${contextData.description} (Source: ${contextData.source.name})`
+    : 'No current news context available.'
+    
   const userResponse = await generateVoiceChallenge(context)
   if (!userResponse) {
     return 'Failed to generate voice challenge.'
